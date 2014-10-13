@@ -1,14 +1,15 @@
 {
   "name": "Guidedog",
   "version": "0.0.0",
-  "description": "Front-end styleguide builder",
+  "description": "Living styleguides with ease",
   "main": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/.bin/_mocha"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "chai": "^1.9.2",
     "connect": "^3.0.1",
     "gulp": "^3.8.6",
     "gulp-autoprefixer": "0.0.8",
@@ -25,7 +26,12 @@
     "gulp-stylus": "^1.3.0",
     "gulp-uglify": "^0.3.1",
     "gulp-wrap": "^0.3.0",
+    "mocha": "^1.21.5",
     "node-pow": "0.0.2",
     "serve-static": "^1.3.0"
+  },
+  "dependencies": {
+    "js-yaml": "^3.2.2",
+    "markdown": "^0.5.0"
   }
 }
