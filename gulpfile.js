@@ -1,138 +1,74 @@
-//-- Includes -----------------------------------------------------
-var gulp = require('gulp'),
-    autoprefixer = require('gulp-autoprefixer'),
-    rename = require('gulp-rename'),
-    minify = require('gulp-minify-css'),
-    uglify = require('gulp-uglify'),
-    order = require('gulp-order'),
-    wrap = require('gulp-wrap'),
-    declare = require('gulp-declare'),
-    jade = require('gulp-jade'),
-    concat = require('gulp-concat'),
-    nodemon = require('gulp-nodemon'),
-    handlebars = require('gulp-handlebars'),
-    less = require('gulp-less'),
-    stylus = require('gulp-stylus'),
-    notify = require('gulp-notify');
+//-- Includes -------------------------------------------------------
+var gulp = require('gulp')
+var wrap = require('gulp-wrap')
+var rename = require('gulp-rename')
+var uglify = require('gulp-uglify')
+var concat = require('gulp-concat')
+var stylus = require('gulp-stylus')
+var notify = require('gulp-notify')
+var declare = require('gulp-declare')
+var minify = require('gulp-minify-css')
+var handlebars = require('gulp-handlebars')
+var browserify = require('gulp-browserify')
+var autoprefixer = require('gulp-autoprefixer')
 
-//-- Vendor Dependencies -----------------------------------------------------
-var vendorJSDependencies = [
-  './bower_components/js-beautify/js/lib/beautify-html.js',
-  './bower_components/jade/jade.js',
-  './bower_components/markdown/lib/markdown.js',
-  './bower_components/handlebars/handlebars.runtime.js',
-  './bower_components/prism/prism.js',
-  './bower_components/prism/components/prism-haskell.js',
-  './bower_components/prism/plugins/line-numbers/prism-line-numbers.js',
-  './bower_components/js-yaml/dist/js-yaml.js'
-];
-var vendorCSSDependencies = [ 
-  './bower_components/prism/themes/prism-coy.css',
-  './bower_components/prism/plugins/line-numbers/prism-line-numbers.css'
-];
+//-- Browserify core lib  -------------------------------------------
+gulp.task('browserify-lib', function() {
+  gulp.src('./lib/browser.js')
+    .pipe(browserify())
+    .pipe(rename('guidedog-lib.js'))
+    .pipe(gulp.dest('./_build/lib'))
+})
 
-//-- Compile JS -----------------------------------------------------
-gulp.task('guidedog-js', function(){
-  vendorJSDependencies.push('./src/template/guidedog.js');
-  vendorJSDependencies.push('./src/js/guidedog.js');
-  gulp.src(vendorJSDependencies)
-    .pipe(concat('guidedog.min.js'))
-    .pipe(uglify())
-    .pipe(gulp.dest('./dist/'));
-});
-gulp.task('example-js', function(){
-  gulp.src('./example/src/js/**/*.js')
-    .pipe(concat('app.min.js'))
-    .pipe(uglify())
-    .pipe(gulp.dest('./example/build/js/'));
-});
-
-//-- Compile Styles -----------------------------------------------------
-gulp.task('guidedog-css', function(){
-  // compile guidedog stylus
-  gulp.src('./src/styl/**/*.styl')
-    .pipe(stylus())
-    .on("error", notify.onError(function (error) {
-      return "Stylus error: " + error.message;
-    }))
-    .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
-    .pipe(minify())
-    .pipe(gulp.dest('./src/css/'));
-  // merge compiled guidedog stylus with vendor CSS
-  vendorCSSDependencies.push('./src/css/guidedog.css')
-  gulp.src(vendorCSSDependencies)
-    .pipe(concat('guidedog.css'))
-    .pipe(minify())
-    .pipe(gulp.dest('./dist/'));
-});
-gulp.task('example-css', function(){
-  gulp.src('./example/src/styl/styl.styl')
-    .pipe(stylus())
-    .on("error", notify.onError(function (error) {
-      return "Stylus error: " + error.message;
-    }))
-    .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
-    .pipe(minify())
-    .pipe(gulp.dest('./example/build/css/'));
-
-  gulp.src('./example/src/less/less.less')
-    .pipe(less())
-    .on("error", notify.onError(function (error) {
-      return "Less error: " + error.message;
-    }))
-    .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
-    .pipe(minify())
-    .pipe(gulp.dest('./example/build/css/'));
-});
-
-//-- Compile Views -----------------------------------------------------
-gulp.task('guidedog-views', function(){
-  gulp.src('./src/template/guidedog.handlebars')
+//-- Compile Views --------------------------------------------------
+gulp.task('views', function() {
+  gulp.src('./assets/handlebars/**/*.handlebars')
     .pipe(handlebars())
     .pipe(wrap('Handlebars.template(<%= contents %>)'))
     .pipe(declare({
       namespace: 'Guidedog.templates',
       noRedeclare: true,
     }))
-    .pipe(gulp.dest('./src/template/'));
-});
-gulp.task('example-views', function(){
-  gulp.src('./example/src/jade/index.jade')
-    .pipe(jade({
-      pretty: true
-    }))
-    .on("error", notify.onError(function (error) {
-      return "Jade error: " + error.message;
-    }))
-    .pipe(gulp.dest('./example/build/'));
-});
+    .pipe(gulp.dest('./_build/templates'))
+})
 
-//-- Start local server -----------------------------------------------------
-gulp.task('server', function() {
-  nodemon({
-    verbose: false,
-    script: 'server.js',
-    watch: ['source', 'server.js'],
-    ext: 'js json',
-    env: {
-      NODE_ENV: 'development'
-    }
-  })
+//-- Compile Dist JS ------------------------------------------------
+gulp.task('guidedog-js', ['views', 'browserify-lib'], function() {
+  var sources = [
+    './_build/templates/**/*.js',
+    './_build/lib/**/*.js',
+    './assets/javascript/jquery-guidedog.js'
+  ]
+
+  gulp.src(sources)
+    .pipe(concat('guidedog.js'))
+    .pipe(gulp.dest('./dist'))
+    .pipe(uglify())
+    .pipe(rename('guidedog.min.js'))
+    .pipe(gulp.dest('./dist'))
+})
+
+//-- Compile Styles -------------------------------------------------
+gulp.task('guidedog-css', function() {
+  gulp.src('./assets/stylus/**/*.styl')
+    .pipe(stylus())
+    .on("error", notify.onError(function (error) {
+      return "Stylus error: " + error.message
+    }))
+    .pipe(concat('guidedog.css'))
+    .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
+    .pipe(gulp.dest('./dist'))
+    .pipe(minify())
+    .pipe(rename('guidedog.min.css'))
+    .pipe(gulp.dest('./dist'))
 })
 
 //-- Watch Files for Changes -----------------------------------------------------
-gulp.task('watch', function(){
-  gulp.watch('./example/src/jade/index.jade', ['example-views']);
-  gulp.watch('./example/src/js/**/*.js', ['example-js']);
-  gulp.watch([
-    './example/src/styl/**/*.styl',
-    './example/src/less/**/*.less'
-  ], ['example-css']);
-
-  gulp.watch('./src/template/guidedog.handlebars', ['guidedog-views', 'guidedog-js']);
-  gulp.watch('./src/js/guidedog.js', ['guidedog-js']);
-  gulp.watch('./src/styl/**/*.styl', ['guidedog-css']);
+gulp.task('watch', function() {
+  gulp.watch('./assets/handlebars/**/*.handlebars', ['guidedog-js'])
+  gulp.watch('./assets/javascript/**/*.js', ['guidedog-js'])
+  gulp.watch('./assets/stylus/**/*.styl', ['guidedog-css'])
 })
 
 //-- Default Task -----------------------------------------------------
-gulp.task('default', ['example-views', 'example-js', 'example-css', 'guidedog-views', 'guidedog-js', 'guidedog-css', 'watch', 'server']);
+gulp.task('default', ['guidedog-js', 'guidedog-css', 'watch'])

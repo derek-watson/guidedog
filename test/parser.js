@@ -16,7 +16,7 @@ describe('guidedog comment parser', function() {
 
   describe('matching comments', function() {
     it('matches double exclamation marks', function() {
-      var result = parser('/*!! hello */')
+      var result = parser('/*!!\nhello\n*/')
 
       assert.equal(result.sections.length, 1)
       assert.equal(result.sections[0].subSections.length, 1)
@@ -24,7 +24,7 @@ describe('guidedog comment parser', function() {
     })
 
     it('matches triple exclamation marks', function() {
-      var result = parser('/*!!! hello */')
+      var result = parser('/*!!!\nhello\n*/')
 
       assert.equal(result.sections.length, 1)
       assert.equal(result.sections[0].subSections.length, 1)
@@ -38,10 +38,10 @@ describe('guidedog comment parser', function() {
 
     it('matches a series of comments in a row', function() {
       var comments = [
-        '/*!!! hello */',
-        '/*!!! hello */',
-        '/*!!! hello */',
-        '/*!!! hello */'
+        '/*!!!\nhello\n*/',
+        '/*!!!\nhello\n*/',
+        '/*!!!\nhello\n*/',
+        '/*!!!\nhello\n*/'
       ].join('\n')
 
       var results = parser(comments)
@@ -53,10 +53,10 @@ describe('guidedog comment parser', function() {
     it('matches a series of comments separated by arbitrary non-comment text', function() {
       var separatorText = '\n\nThis is some arbitrary text\nSeparating the comments\n\n'
       var comments = [
-        '/*!!! hello */',
-        '/*!!! hello */',
-        '/*!!! hello */',
-        '/*!!! hello */'
+        '/*!!!\nhello\n*/',
+        '/*!!!\nhello\n*/',
+        '/*!!!\nhello\n*/',
+        '/*!!!\nhello\n*/'
       ].join(separatorText)
 
       var results = parser(comments)
@@ -107,7 +107,7 @@ describe('guidedog comment parser', function() {
   describe('parsing markdown descriptions', function() {
     it('parses markdown descriptions', function() {
       var markdown = '**bold text**'
-      var expected = '<p><strong>bold text</strong></p>'
+      var expected = '\n<b>bold text</b>\n'
 
       var comment = ['/*!!!', yamlDump({section: 'a', description: markdown}), '*/'].join('\n')
 
